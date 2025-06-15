@@ -13,8 +13,8 @@ from PIL import Image
 from transformers import MarianMTModel, MarianTokenizer, pipeline
 import torch
 from streamlit.components.v1 import html
-from security_alerts import classify_and_alert
 from street_bundling import group_by_street
+
 # Set page configuration as the first Streamlit command
 st.set_page_config(
     page_title="Gestión de Incidencias",
@@ -62,7 +62,9 @@ model_name = "Helsinki-NLP/opus-mt-en-es"
 model, tokenizer = None, None
 try:
     tokenizer = MarianTokenizer.from_pretrained(model_name)
-    model = MarianMTModel.from_pretrained(model_name).to(device)
+    model = MarianMTModel.from_pretrained(model_name)
+    # Mover el modelo a CPU de manera segura
+    model = model.to_empty(device="cpu")
     print("Translation model initialized successfully")
 except Exception as e:
     print(f"Error loading translation model: {e}")
@@ -71,7 +73,9 @@ except Exception as e:
 classifier = None
 try:
     # Usar un modelo más ligero para evitar problemas de memoria
-    classifier = pipeline("zero-shot-classification", model="valhalla/distilbart-mnli-12-1", device=-1)
+    classifier = pipeline("zero-shot-classification", 
+                        model="valhalla/distilbart-mnli-12-1", 
+                        device="cpu")  # Forzar CPU
     print("Classifier initialized successfully")
 except Exception as e:
     print(f"Error loading zero-shot classifier: {e}")
@@ -81,7 +85,9 @@ def traducir_texto(texto, modelo=model, tokenizer=tokenizer):
     if not texto.strip() or modelo is None or tokenizer is None:
         return ""
     try:
-        batch = tokenizer([texto], return_tensors="pt", padding=True).to(device)
+        # Asegurarse de que el modelo está en CPU
+        modelo = modelo.to_empty(device="cpu")
+        batch = tokenizer([texto], return_tensors="pt", padding=True)
         translated = modelo.generate(**batch)
         texto_traducido = tokenizer.decode(translated[0], skip_special_tokens=True)
         return texto_traducido
@@ -210,7 +216,7 @@ def main_navbar():
 # Sidebar con logo y contenido estático
 def setup_sidebar():
     with st.sidebar:
-        st.image("Images/logo.png", use_column_width=True)
+        st.image("Images/logo.png", use_container_width=True)
         st.markdown("## 📌 Ayuda Rápida")
         st.markdown("""
         - **Reporte de incidencias**: 24/7
@@ -241,7 +247,7 @@ def extract_text_from_image(image):
 # Home page
 def pagina_home():
     st.title("🏙️ Bienvenido a la Plataforma de Incidencias de Valencia")
-    st.image("Images/valencia.jpg", use_column_width=True, caption="Nuestra querida ciudad de Valencia")
+    st.image("Images/valencia.jpg", use_container_width=True, caption="Nuestra querida ciudad de Valencia")
     st.markdown("""
     ## Sobre Nosotros
     Somos el equipo encargado de mantener y mejorar los espacios públicos de la ciudad de Valencia.
@@ -283,8 +289,6 @@ def reportar_incidencia():
     ubicacion = st.text_input("Ubicación * (por ejemplo, Calle Sagasta, Madrid):")
     descripcion_input = st.text_area("Descripción adicional * (describe brevemente la incidencia, preferiblemente en inglés, pero se acepta español):")
 
-    # Debug: Opción para omitir el clasificador
-    debug_bypass_classifier = st.checkbox("Omitir clasificador zero-shot (debug)", value=False)
 
     if st.button("Procesar Incidencia"):
         print("Iniciando procesamiento de incidencia...")
@@ -297,7 +301,7 @@ def reportar_incidencia():
             if not ubicacion or not descripcion_input:
                 st.error("Ubicación y descripción son campos obligatorios.")
                 return
-            if not debug_bypass_classifier and classifier is None:
+            if classifier is None:
                 st.error("Clasificador no disponible. Verifica la configuración del modelo.")
                 return
 
@@ -331,8 +335,9 @@ def reportar_incidencia():
                         # Traducir de español a inglés para el clasificador
                         en_trans_model_name = "Helsinki-NLP/opus-mt-es-en"
                         en_tokenizer = MarianTokenizer.from_pretrained(en_trans_model_name)
-                        en_model = MarianMTModel.from_pretrained(en_trans_model_name).to(device)
-                        batch = en_tokenizer([descripcion_input], return_tensors="pt", padding=True).to(device)
+                        en_model = MarianMTModel.from_pretrained(en_trans_model_name)
+                        en_model = en_model.to("cpu")  # Forzar CPU
+                        batch = en_tokenizer([descripcion_input], return_tensors="pt", padding=True)
                         translated = en_model.generate(**batch)
                         descripcion_en = en_tokenizer.batch_decode(translated, skip_special_tokens=True)[0]
                         print("Traducción completada - Español:", descripcion_es, "Inglés:", descripcion_en)
@@ -346,32 +351,80 @@ def reportar_incidencia():
                     categorias = ["Farola", "Banco", "Papelera","Contenedor", "Señalización", "Otros"]
                     categoria = "Otros"  # Fallback por defecto
                     probabilidades = {}
-                    if not debug_bypass_classifier:
-                        print("Ejecutando clasificación zero-shot con input:", descripcion_en)
-                        try:
-                            result = classifier(descripcion_en, candidate_labels=categorias, device=-1)
-                            categoria = result['labels'][0]
-                            probabilidades = dict(zip(result['labels'], result['scores']))
-                            print("Clasificación completada:", categoria, probabilidades)
-                        except Exception as e:
-                            st.warning(f"Error en la clasificación: {str(e)}. Usando categoría heurística.")
-                            print(f"Error en la clasificación: {str(e)}")
-                            # Fallback heurístico basado en palabras clave
-                            descripcion_lower = descripcion_input.lower()
-                            if "farola" in descripcion_lower or "streetlight" in descripcion_lower:
-                                categoria = "Farola"
-                            elif "banco" in descripcion_lower or "bench" in descripcion_lower:
-                                categoria = "Banco"
-                            elif "papelera" in descripcion_lower or "trash" in descripcion_lower:
-                                categoria = "Papelera"
-                            elif "señal" in descripcion_lower or "sign" in descripcion_lower:
-                                categoria = "Señalización"
-                            elif "Contenedor" in descripcion_lower or "bin" in descripcion_lower:
-                                categoria = "Contenedor"
-                            print("Categoría heurística asignada:", categoria)
-                    else:
-                        print("Clasificador omitido, usando categoría por defecto:", categoria)
+                    print("Ejecutando clasificación zero-shot con input:", descripcion_en)
+                    try:
+                        # Añadir contexto adicional para mejorar la clasificación
+                        context = f"This is a description of a street furniture issue: {descripcion_en}"
+                        
+                        # Obtener clasificación del modelo
+                        result = classifier(context, candidate_labels=categorias)
+                        probabilidades = dict(zip(result['labels'], result['scores']))
+                        
+                        # Ajustar probabilidades basado en metadatos
+                        if id_match and id_match.group(1):
+                            id_prefix = id_match.group(1)[0].upper()
+                            if id_prefix == 'F':
+                                probabilidades['Farola'] = min(1.0, probabilidades.get('Farola', 0) + 0.3)
+                            elif id_prefix == 'B':
+                                probabilidades['Banco'] = min(1.0, probabilidades.get('Banco', 0) + 0.3)
+                            elif id_prefix == 'P':
+                                probabilidades['Papelera'] = min(1.0, probabilidades.get('Papelera', 0) + 0.3)
+                            elif id_prefix == 'C':
+                                probabilidades['Contenedor'] = min(1.0, probabilidades.get('Contenedor', 0) + 0.3)
+                            elif id_prefix == 'S':
+                                probabilidades['Señalización'] = min(1.0, probabilidades.get('Señalización', 0) + 0.3)
+                        
+                        # Ajustar basado en el tipo
+                        if type_match and type_match.group(1):
+                            tipo = type_match.group(1).lower()
+                            if 'farola' in tipo or 'lamp' in tipo or 'led' in tipo:
+                                probabilidades['Farola'] = min(1.0, probabilidades.get('Farola', 0) + 0.3)
+                            elif 'banco' in tipo or 'bench' in tipo:
+                                probabilidades['Banco'] = min(1.0, probabilidades.get('Banco', 0) + 0.3)
+                            elif 'papelera' in tipo or 'trash' in tipo:
+                                probabilidades['Papelera'] = min(1.0, probabilidades.get('Papelera', 0) + 0.3)
+                            elif 'contenedor' in tipo or 'bin' in tipo:
+                                probabilidades['Contenedor'] = min(1.0, probabilidades.get('Contenedor', 0) + 0.3)
+                            elif 'señal' in tipo or 'sign' in tipo:
+                                probabilidades['Señalización'] = min(1.0, probabilidades.get('Señalización', 0) + 0.3)
+                        
+                        # Seleccionar la categoría con mayor probabilidad
+                        categoria = max(probabilidades.items(), key=lambda x: x[1])[0]
+                        print("Clasificación completada:", categoria, probabilidades)
+                    except Exception as e:
+                        st.warning(f"Error en la clasificación: {str(e)}. Usando categoría por defecto.")
+                        print(f"Error en la clasificación: {str(e)}")
+                        # Fallback heurístico mejorado
+                        descripcion_lower = descripcion_input.lower()
+                        # Palabras clave para farolas
+                        farola_keywords = ["farola", "streetlight", "lamp", "luz", "iluminación", "poste", "poste de luz", 
+                                         "lámpara", "luminaria", "alumbrado", "farol", "farolillo", "luz pública"]
+                        # Palabras clave para otros elementos
+                        banco_keywords = ["banco", "bench", "asiento", "banca"]
+                        papelera_keywords = ["papelera", "trash", "basura", "contenedor", "waste", "litter"]
+                        señal_keywords = ["señal", "sign", "señalización", "traffic", "tráfico", "semáforo"]
+                        contenedor_keywords = ["contenedor", "bin", "container", "reciclaje", "recycling"]
 
+                        # Contar coincidencias para cada categoría
+                        farola_count = sum(1 for word in farola_keywords if word in descripcion_lower)
+                        banco_count = sum(1 for word in banco_keywords if word in descripcion_lower)
+                        papelera_count = sum(1 for word in papelera_keywords if word in descripcion_lower)
+                        señal_count = sum(1 for word in señal_keywords if word in descripcion_lower)
+                        contenedor_count = sum(1 for word in contenedor_keywords if word in descripcion_lower)
+
+                        # Asignar la categoría con más coincidencias
+                        counts = {
+                            "Farola": farola_count,
+                            "Banco": banco_count,
+                            "Papelera": papelera_count,
+                            "Señalización": señal_count,
+                            "Contenedor": contenedor_count
+                        }
+                        
+                        if max(counts.values()) > 0:
+                            categoria = max(counts.items(), key=lambda x: x[1])[0]
+                        
+                        print("Categoría heurística asignada:", categoria)
 
                     incidence_data = {
                         'ID': id_match.group(1) if id_match else "No disponible",
@@ -388,14 +441,6 @@ def reportar_incidencia():
                         'Categoría': categoria,
                         'Probabilidades': probabilidades
                     }
-
-                    # ————— Insertar clasificación y alerta —————
-                    
-                    try: incidence_data = classify_and_alert(incidence_data)
-
-                    except Exception as e: st.warning(f"No pudo clasificarse la seguridad: {e}")
-                        
-                    # ——————————————————————————————————————————
 
                     # Guardar en S3
                     print("Subiendo a S3...")
@@ -471,16 +516,6 @@ def ver_incidencias():
                     st.markdown(f"**📊 Probabilidades por categoría:** {inc.get('Probabilidades', 'No disponible')}")
                     st.caption(f"🕒 Reportado: {inc.get('Timestamp', '')}")
                    
-                   # — Nivel de seguridad —
-                nivel = inc.get("security_level", "bajo")
-                color = {"bajo":"green","medio":"orange","alto":"red"}[nivel]
-                st.markdown(
-                    f"<span style='color:{color}; font-weight:bold;'>"
-                    f"🔔 Seguridad: {nivel.upper()}</span>",
-                    unsafe_allow_html=True
-                )
-                # ——————————————————————
-                
         else:
             st.info("No hay incidencias registradas para la categoría seleccionada.")
     except Exception as e:
@@ -522,68 +557,112 @@ def pagina_estadisticas():
             st.info(f"No hay incidencias para la categoría '{categoria_filtro}'.")
             return
 
-        # Conteo por categoría
-        categoria_counts = filtered_df['Categoría'].value_counts().to_dict()
+        # Crear dos columnas para las gráficas
+        col1, col2 = st.columns(2)
 
-        labels = list(categoria_counts.keys())
-        values = list(categoria_counts.values())
-
-        # HTML + Chart.js para mostrar el gráfico
-        chart_html = f"""
-        <canvas id="myChart" height="300"></canvas>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script>
-        const ctx = document.getElementById('myChart').getContext('2d');
-        new Chart(ctx, {{
-            type: 'bar',
-            data: {{
-                labels: {labels},
-                datasets: [{{
-                    label: 'Número de Incidencias',
-                    data: {values},
-                    backgroundColor: 'rgba(59, 130, 246, 0.7)',
-                    borderColor: 'rgba(59, 130, 246, 1)',
-                    borderWidth: 1
-                }}]
-            }},
-            options: {{
-                responsive: true,
-                plugins: {{
-                    legend: {{
-                        position: 'top',
-                        labels: {{
-                            color: '#333',
-                            font: {{ size: 14, family: 'system-ui' }}
+        with col1:
+            st.subheader("📈 Distribución por Categoría")
+            # Gráfico de barras
+            categoria_counts = filtered_df['Categoría'].value_counts().to_dict()
+            labels = list(categoria_counts.keys())
+            values = list(categoria_counts.values())
+            
+            chart_html = f"""
+            <canvas id="barChart" height="300"></canvas>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script>
+            const ctx = document.getElementById('barChart').getContext('2d');
+            new Chart(ctx, {{
+                type: 'bar',
+                data: {{
+                    labels: {labels},
+                    datasets: [{{
+                        label: 'Número de Incidencias',
+                        data: {values},
+                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1
+                    }}]
+                }},
+                options: {{
+                    responsive: true,
+                    plugins: {{
+                        legend: {{
+                            position: 'top',
+                        }},
+                        title: {{
+                            display: true,
+                            text: 'Incidencias por Categoría'
                         }}
                     }},
-                    tooltip: {{
-                        enabled: true
-                    }}
-                }},
-                scales: {{
-                    x: {{
-                        ticks: {{ color: '#333' }},
-                        grid: {{ display: false }}
-                    }},
-                    y: {{
-                        beginAtZero: true,
-                        ticks: {{ color: '#333', stepSize: 1 }},
-                        grid: {{
-                            color: 'rgba(0,0,0,0.1)',
-                            borderDash: [5, 5]
+                    scales: {{
+                        y: {{
+                            beginAtZero: true,
+                            ticks: {{
+                                stepSize: 1
+                            }}
                         }}
                     }}
                 }}
-            }}
-        }});
-        </script>
-        """
+            }});
+            </script>
+            """
+            html(chart_html, height=400)
 
-        st.markdown("### Distribución de Incidencias por Categoría")
-        html(chart_html, height=400)
+        with col2:
+            st.subheader("🍩 Estado de Incidencias")
+            # Gráfico circular
+            estado_counts = filtered_df['Estado'].value_counts().to_dict()
+            labels = list(estado_counts.keys())
+            values = list(estado_counts.values())
+            
+            chart_html = f"""
+            <canvas id="pieChart" height="300"></canvas>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script>
+            const ctx = document.getElementById('pieChart').getContext('2d');
+            new Chart(ctx, {{
+                type: 'doughnut',
+                data: {{
+                    labels: {labels},
+                    datasets: [{{
+                        data: {values},
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.7)',
+                            'rgba(54, 162, 235, 0.7)',
+                            'rgba(255, 206, 86, 0.7)',
+                            'rgba(75, 192, 192, 0.7)',
+                            'rgba(153, 102, 255, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(153, 102, 255, 1)'
+                        ],
+                        borderWidth: 1
+                    }}]
+                }},
+                options: {{
+                    responsive: true,
+                    plugins: {{
+                        legend: {{
+                            position: 'right',
+                        }},
+                        title: {{
+                            display: true,
+                            text: 'Distribución por Estado'
+                        }}
+                    }}
+                }}
+            }});
+            </script>
+            """
+            html(chart_html, height=400)
 
         # Listado de incidencias
-        st.subheader("Listado de Incidencias")
+        st.subheader("📋 Listado de Incidencias")
         max_display = 10
         for idx, inc in enumerate(
             sorted(filtered_df.to_dict('records'), key=lambda x: x.get('Timestamp', ''), reverse=True)[:max_display]
@@ -606,6 +685,7 @@ def pagina_estadisticas():
     except Exception as e:
         st.error(f"Error al generar estadísticas: {str(e)}")
         print(f"Statistics error: {str(e)}")
+
 # Página del Chatbot
 def chatbot_page():
     st.title("🤖 Chatbot")
