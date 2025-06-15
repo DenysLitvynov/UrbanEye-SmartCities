@@ -13,7 +13,8 @@ from PIL import Image
 from transformers import MarianMTModel, MarianTokenizer, pipeline
 import torch
 from streamlit.components.v1 import html
-
+from security_alerts import classify_and_alert
+from street_bundling import group_by_street
 # Set page configuration as the first Streamlit command
 st.set_page_config(
     page_title="Gestión de Incidencias",
@@ -209,7 +210,7 @@ def main_navbar():
 # Sidebar con logo y contenido estático
 def setup_sidebar():
     with st.sidebar:
-        st.image("Images/logo.png", use_container_width=True)
+        st.image("Images/logo.png", use_column_width=True)
         st.markdown("## 📌 Ayuda Rápida")
         st.markdown("""
         - **Reporte de incidencias**: 24/7
@@ -240,7 +241,7 @@ def extract_text_from_image(image):
 # Home page
 def pagina_home():
     st.title("🏙️ Bienvenido a la Plataforma de Incidencias de Valencia")
-    st.image("Images/valencia.jpg", use_container_width=True, caption="Nuestra querida ciudad de Valencia")
+    st.image("Images/valencia.jpg", use_column_width=True, caption="Nuestra querida ciudad de Valencia")
     st.markdown("""
     ## Sobre Nosotros
     Somos el equipo encargado de mantener y mejorar los espacios públicos de la ciudad de Valencia.
@@ -371,6 +372,7 @@ def reportar_incidencia():
                     else:
                         print("Clasificador omitido, usando categoría por defecto:", categoria)
 
+
                     incidence_data = {
                         'ID': id_match.group(1) if id_match else "No disponible",
                         'Ubicación': ubicacion,
@@ -386,6 +388,14 @@ def reportar_incidencia():
                         'Categoría': categoria,
                         'Probabilidades': probabilidades
                     }
+
+                    # ————— Insertar clasificación y alerta —————
+                    
+                    try: incidence_data = classify_and_alert(incidence_data)
+
+                    except Exception as e: st.warning(f"No pudo clasificarse la seguridad: {e}")
+                        
+                    # ——————————————————————————————————————————
 
                     # Guardar en S3
                     print("Subiendo a S3...")
@@ -432,6 +442,21 @@ def ver_incidencias():
                             incidences.append(metadata)
 
         if incidences:
+            
+            if incidences:
+                
+            # — Agrupamiento automático por calle —
+                street_groups = group_by_street(incidences)
+            if street_groups:
+                st.subheader("🔗 Agrupaciones automáticas por calle")
+                for grp in street_groups:
+                    calle = grp["street"].title()
+                    n = grp["count"]
+                    ids = [inc["ID"] for inc in grp["incidencias"]]
+                    st.markdown(f"- **{calle}**: {n} incidencias → IDs: {', '.join(ids)}")
+                st.markdown("---")
+            # — Fin agrupamiento automático — 
+                
             for inc in sorted(incidences, key=lambda x: x.get('Timestamp', ''), reverse=True):
                 with st.expander(f"🆔 ID: {inc.get('ID', 'No disponible')} | 📍 {inc.get('Ubicación', 'No disponible')} | 📌 Categoría: {inc.get('Categoría', 'No disponible')}"):
                     st.markdown(f"**📍 Ubicación:** {inc.get('Ubicación', 'No disponible')}")
@@ -445,6 +470,17 @@ def ver_incidencias():
                     st.markdown(f"**📷 Texto extraído:** `{inc.get('Texto Extraído', '')}`")
                     st.markdown(f"**📊 Probabilidades por categoría:** {inc.get('Probabilidades', 'No disponible')}")
                     st.caption(f"🕒 Reportado: {inc.get('Timestamp', '')}")
+                   
+                   # — Nivel de seguridad —
+                nivel = inc.get("security_level", "bajo")
+                color = {"bajo":"green","medio":"orange","alto":"red"}[nivel]
+                st.markdown(
+                    f"<span style='color:{color}; font-weight:bold;'>"
+                    f"🔔 Seguridad: {nivel.upper()}</span>",
+                    unsafe_allow_html=True
+                )
+                # ——————————————————————
+                
         else:
             st.info("No hay incidencias registradas para la categoría seleccionada.")
     except Exception as e:

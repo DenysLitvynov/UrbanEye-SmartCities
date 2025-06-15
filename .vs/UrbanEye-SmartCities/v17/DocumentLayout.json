@@ -1,0 +1,127 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\juanb\\OneDrive\\Documentos\\03-GTI\\Inteligencia Artificial\\Smart City\\UrbanEye-SmartCities\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\juanb\\OneDrive\\Documentos\\03-GTI\\Inteligencia Artificial\\Smart City\\UrbanEye-SmartCities\\app.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:app.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\juanb\\OneDrive\\Documentos\\03-GTI\\Inteligencia Artificial\\Smart City\\UrbanEye-SmartCities\\security_alerts.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:security_alerts.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\juanb\\OneDrive\\Documentos\\03-GTI\\Inteligencia Artificial\\Smart City\\UrbanEye-SmartCities\\street_bundling.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:street_bundling.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\juanb\\OneDrive\\Documentos\\03-GTI\\Inteligencia Artificial\\Smart City\\UrbanEye-SmartCities\\requirements.txt||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:requirements.txt||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\juanb\\OneDrive\\Documentos\\03-GTI\\Inteligencia Artificial\\Smart City\\UrbanEye-SmartCities\\README.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:README.md||{EFC0BB08-EA7D-40C6-A696-C870411A895B}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 8,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{b1e99781-ab81-11d0-b683-00aa00a3ee26}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{3ae79031-e1bc-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "street_bundling.py",
+              "DocumentMoniker": "C:\\Users\\juanb\\OneDrive\\Documentos\\03-GTI\\Inteligencia Artificial\\Smart City\\UrbanEye-SmartCities\\street_bundling.py",
+              "RelativeDocumentMoniker": "street_bundling.py",
+              "ToolTip": "C:\\Users\\juanb\\OneDrive\\Documentos\\03-GTI\\Inteligencia Artificial\\Smart City\\UrbanEye-SmartCities\\street_bundling.py",
+              "RelativeToolTip": "street_bundling.py",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABkAAAAIAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-06-14T18:34:27.275Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "requirements.txt",
+              "DocumentMoniker": "C:\\Users\\juanb\\OneDrive\\Documentos\\03-GTI\\Inteligencia Artificial\\Smart City\\UrbanEye-SmartCities\\requirements.txt",
+              "RelativeDocumentMoniker": "requirements.txt",
+              "ToolTip": "C:\\Users\\juanb\\OneDrive\\Documentos\\03-GTI\\Inteligencia Artificial\\Smart City\\UrbanEye-SmartCities\\requirements.txt",
+              "RelativeToolTip": "requirements.txt",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003109|",
+              "WhenOpened": "2025-06-14T18:09:02.64Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "README.md",
+              "DocumentMoniker": "C:\\Users\\juanb\\OneDrive\\Documentos\\03-GTI\\Inteligencia Artificial\\Smart City\\UrbanEye-SmartCities\\README.md",
+              "RelativeDocumentMoniker": "README.md",
+              "ToolTip": "C:\\Users\\juanb\\OneDrive\\Documentos\\03-GTI\\Inteligencia Artificial\\Smart City\\UrbanEye-SmartCities\\README.md",
+              "RelativeToolTip": "README.md",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAB0AAAA0AAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001818|",
+              "WhenOpened": "2025-06-14T18:07:32.563Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "security_alerts.py",
+              "DocumentMoniker": "C:\\Users\\juanb\\OneDrive\\Documentos\\03-GTI\\Inteligencia Artificial\\Smart City\\UrbanEye-SmartCities\\security_alerts.py",
+              "RelativeDocumentMoniker": "security_alerts.py",
+              "ToolTip": "C:\\Users\\juanb\\OneDrive\\Documentos\\03-GTI\\Inteligencia Artificial\\Smart City\\UrbanEye-SmartCities\\security_alerts.py",
+              "RelativeToolTip": "security_alerts.py",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAcAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-06-14T15:47:32.033Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "app.py",
+              "DocumentMoniker": "C:\\Users\\juanb\\OneDrive\\Documentos\\03-GTI\\Inteligencia Artificial\\Smart City\\UrbanEye-SmartCities\\app.py",
+              "RelativeDocumentMoniker": "app.py",
+              "ToolTip": "C:\\Users\\juanb\\OneDrive\\Documentos\\03-GTI\\Inteligencia Artificial\\Smart City\\UrbanEye-SmartCities\\app.py",
+              "RelativeToolTip": "app.py",
+              "ViewState": "AQIAAKkBAAAAAAAAAIAwwMEBAAAdAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2025-06-14T14:46:53.349Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{d78612c7-9962-4b83-95d9-268046dad23a}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
