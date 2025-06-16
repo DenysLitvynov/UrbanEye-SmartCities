@@ -174,53 +174,56 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Navbar usando Hydralit Components
-def main_navbar():
-    menu_data = [
-        {'icon': "🏠", 'label': "Home"},
-    ]
 
-    if st.session_state.get("authenticated"):
-        menu_data += [
-            {'icon': "📋", 'label': "Ver Incidencias"},
-            {'icon': "📊", 'label': "Estadísticas"},
-            {'icon': "🔒", 'label': "Cerrar Sesión"},
-        ]
-    else:
-        menu_data += [
-            {'icon': "📝", 'label': "Poner Incidencia"},
-            {'icon': "🔑", 'label': "Iniciar Sesión"},
-            {'icon': "💬", 'label': "Chatbot"}
-        ]
-
-    selected = hc.nav_bar(
-        menu_definition=menu_data,
-        override_theme={
-            'menu_background': '#FFFFFF00',
-            'txc_inactive': '#4a4a4a',
-            'txc_active': '#1a73e8',
-            'option_active': '#ffffff00',
-            'option_hover': '#f5f5f5',
-            'font_family': 'system-ui',
-            'font_size': '15px',
-            'padding': '0.75rem 1.5rem',
-            'border_radius': '20px',
-            'box_shadow': 'none',
-            'icon_color': '#FFFFFF00',
-            'option_active_border': 'none',
-        },
-        sticky_mode='pinned',
-    )
-
-    return selected
-# Sidebar con logo y contenido estático
 def setup_sidebar():
     with st.sidebar:
         st.image("Images/logo.png", use_container_width=True)
+        st.markdown("## 📍 Menú Principal", unsafe_allow_html=True)
+
+        # Botones de navegación con estilo
+        def nav_button(name, emoji):
+            clicked = st.button(f"{emoji}  {name}", key=f"nav_{name}")
+            if clicked:
+                st.session_state.selected_page = name
+
+        if st.session_state.get("authenticated"):
+            nav_button("Home", "🏠")
+            nav_button("Ver Incidencias", "📋")
+            nav_button("Estadísticas", "📊")
+            nav_button("Cerrar Sesión", "🔒")
+        else:
+            nav_button("Home", "🏠")
+            nav_button("Poner Incidencia", "📝")
+            nav_button("Iniciar Sesión", "🔑")
+            nav_button("Chatbot", "💬")
+
+        # Estilos adicionales en la barra lateral
+        st.markdown("""
+        <style>
+        section[data-testid="stSidebar"] .stButton > button {
+            width: 100%;
+            background-color: #f1f3f4;
+            color: #333;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.2s ease-in-out;
+        }
+        section[data-testid="stSidebar"] .stButton > button:hover {
+            background-color: #e2e6ea;
+            color: #1a73e8;
+            transform: scale(1.02);
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+        # Ayuda y contacto
         st.markdown("## 📌 Ayuda Rápida")
         st.markdown("""
-        - **Reporte de incidencias**: 24/7
-        - **Soporte técnico**: L-V 9:00-14:00
+        - **Reporte de incidencias**: 24/7  
+        - **Soporte técnico**: L-V 9:00-14:00  
         - **Teléfono emergencias**: 900 123 456
         """)
         st.markdown("---")
@@ -731,11 +734,13 @@ def chatbot_page():
                 st.markdown(f"👤 **Tú**: {msg['content']}")
             elif msg["role"] == "assistant":
                 st.markdown(f"🤖 **Chatbot**: {msg['content']}")
-# Lógica de navegación
 def main():
+    if "selected_page" not in st.session_state:
+        st.session_state.selected_page = "Home"
+
     setup_sidebar()
-    selected_page = main_navbar()
-    
+    selected_page = st.session_state.selected_page
+
     if selected_page == "Home":
         pagina_home()
     elif selected_page == "Iniciar Sesión":
@@ -743,6 +748,7 @@ def main():
     elif selected_page == "Cerrar Sesión":
         st.session_state.authenticated = False
         st.success("Sesión cerrada correctamente.")
+        st.session_state.selected_page = "Home"
         st.rerun()
     elif selected_page == "Poner Incidencia":
         reportar_incidencia()
